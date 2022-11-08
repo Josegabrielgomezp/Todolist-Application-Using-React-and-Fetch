@@ -1,29 +1,23 @@
-import React, { useState } from "react";
-
+import React, { useState, useEffect } from "react";
 import {FcCancel} from 'react-icons/fc'
-
 const Home = () => {
 
 	//Declaracion de estado de la lista
-    const [lista, setLista] = useState([
-        { label: "Pasear al perro" },
-        { label: "Aprender React" },
-        { label: "Salir a correr" }
-    ]);
+    const [lista, setLista] = useState([]);
 
     //Declaracion de estado de la tarea
     const [tarea, setTarea] = useState("");
 
-    // e = event | Function handles submit
+    // Se agrega una tarea a la lista
     const agregarTarea = e => {
         if (e.key === "Enter" && tarea !== "") {
             setLista(
                 lista.concat({
                     // Se asigna la tarea a label
-                    label: tarea
+                    label: tarea,
+					done: false
                 })
             );
-
             // Se limpia la variable tarea
             setTarea("");
         }
@@ -33,6 +27,86 @@ const Home = () => {
     const eliminarTarea = index => {
         setLista(lista.filter((item, i) => index != i));
     };
+
+	// Funcion para crear un nuevo usuario y una lista vacia
+	const crearUsuario = async () =>{
+		const response = await fetch('https://assets.breatheco.de/apis/fake/todos/user/apa210',{
+			method: "POST",
+			body: JSON.stringify([]),
+			headers:{
+				'Content-Type': "application/json"
+			}
+		})
+		const data = await response.json();
+		console.log(data);
+	}
+
+	// Funcion para obtener la lista de tareas de la API 
+	const pullAPIListaTareas = async () =>{
+		try{
+			const response = await fetch('https://assets.breatheco.de/apis/fake/todos/user/apa210');
+			const data = await response.json();
+
+			if (response.status === 404) {
+				crearUsuario();
+			} 
+			setLista(data);
+		}catch(err){
+			console.log(err);
+		}
+		
+	}
+
+	// Funcion para enviar una lista de tareas a la API
+	const pushAPIListaTareas = async () =>{
+		if(lista.length >0){
+			try{
+				const response = await fetch('https://assets.breatheco.de/apis/fake/todos/user/apa210',{
+					method: "PUT",
+					body: JSON.stringify(lista),
+					headers:{
+						'Content-Type': "application/json"
+					}
+				})
+				const data = await response.json();
+				console.log(data);
+			}catch(err){
+				console.log(err);
+			}
+		}
+		
+	}
+
+	// Funcion para eliminar una lista de tareas y el usuario de la API.
+	const deleteAPIListaTareas = async () =>{
+		if(lista.length >0){
+			try{
+				const response = await fetch('https://assets.breatheco.de/apis/fake/todos/user/josegabrielgomezp',{
+					method: "DELETE",
+					headers:{
+						'Content-Type': "application/json"
+					}
+				})
+				const data = await response.json();
+				console.log(data);
+				setLista([]);
+			}catch(err){
+				console.log(err);
+			}
+			
+		}
+		
+	}
+
+	useEffect(  ()=> {
+		pullAPIListaTareas();
+	},[])
+
+	
+	useEffect(  ()=> {
+		pushAPIListaTareas();
+	},[lista])
+	
 
     return (
         <div className="d-flex flex-column align-items-center justify-content-center h-100">
@@ -78,7 +152,7 @@ const Home = () => {
                                 href="#"
                                 className="btn btn-dark"
                                 // Setea una lista vacia para limpiar 
-                                onClick={() => setLista([])}>
+                                onClick={() => deleteAPIListaTareas()}>
                                 Limpiar
                             </a>
                         </span>
